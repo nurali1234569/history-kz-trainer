@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тренажёр — История Казахстана</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#eef2f5;color:#222}
+.container{max-width:760px;margin:30px auto;padding:24px;background:#fff;border-radius:18px;box-shadow:0 5px 20px #ccd2d8}
+h1{text-align:center;margin-top:5px}
+h2{line-height:1.35}
+.progress{height:8px;background:#e1e5e9;border-radius:10px;margin:18px 0}
+.bar{height:100%;width:0;background:#2864d7;border-radius:10px}
+.answer{display:block;width:100%;text-align:left;border:2px solid #e1e5e9;background:#f7f8fa;color:#222;padding:14px;margin:10px 0;border-radius:11px;font-size:16px;cursor:pointer}
+.answer:hover{background:#edf3ff}
+.answer.selected{border-color:#2864d7;background:#edf3ff}
+button{border:0;border-radius:10px;padding:12px 20px;background:#2864d7;color:white;font-size:16px;cursor:pointer}
+button:hover{background:#174cae}
+.hidden{display:none}
+.center{text-align:center}
+textarea{width:100%;height:230px;padding:13px;border:1px solid #bbb;border-radius:10px;font-size:16px;resize:vertical}
+.muted{color:#68717b}
+.result{font-size:23px;text-align:center;margin:25px 0}
+</style>
+</head>
+<body>
+<div class="container">
+
+<section id="test">
+<h1>🏺 Тренажёр по истории Казахстана</h1>
+<p class="center muted">Тема: Каменный век</p>
+<div class="progress"><div class="bar" id="bar"></div></div>
+<p id="number" class="muted"></p>
+<h2 id="question"></h2>
+<div id="answers"></div>
+<button onclick="nextQuestion()">Ответить</button>
+</section>
+
+<section id="result" class="hidden">
+<h1>Результат</h1>
+<div id="score" class="result"></div>
+<div class="center">
+<button onclick="openEssay()">Перейти к эссе →</button>
+</div>
+</section>
+
+<section id="essay" class="hidden">
+<h1>📝 Эссе</h1>
+<p><b>Тема:</b> Как менялся образ жизни человека в каменном веке?</p>
+<p class="muted">Напишите небольшой ответ своими словами.</p>
+<textarea id="essayText" placeholder="Введите эссе..."></textarea>
+<br><br>
+<button onclick="checkEssay()">Проверить</button>
+<div id="essayResult"></div>
+</section>
+
+</div>
+
+<script>
+const questions=[
+["Какие три периода обычно выделяют в каменном веке Казахстана?",["Палеолит, мезолит, неолит","Неолит, бронза, железо","Мустье, энеолит, бронза","Палеолит, бронза, железо"],0],
+["Как переводится название «палеолит»? ",["Новый камень","Древний камень","Средний камень","Медный камень"],1],
+["Какой период называют среднекаменным веком?",["Неолит","Энеолит","Мезолит","Палеолит"],2],
+["Какой период называют новокаменным веком?",["Неолит","Мезолит","Палеолит","Энеолит"],0],
+["Из какого материала человек делал первые простейшие орудия?",["Меди","Камня","Железа","Бронзы"],1],
+["Какое занятие относилось к присваивающему хозяйству?",["Земледелие","Скотоводство","Охота","Гончарство"],2],
+["Какая стоянка относится к раннему палеолиту Казахстана?",["Бориказган","Ботай","Бегазы","Берел"],0],
+["В каком районе Казахстана известны древние палеолитические стоянки Бориказган и Танирказган?",["В горах Каратау","В долине Иртыша","В Прикаспии","В районе Алтая"],0],
+["Кто обнаружил серию палеолитических стоянок в горах Каратау в 1958 году?",["К. Байпаков","Х. Алпысбаев","А. Маргулан","В. Радлов"],1],
+["Какое орудие особенно характерно для раннего палеолита?",["Рубило","Стальной нож","Медный меч","Плуг"],0],
+["Как называлась техника среднего палеолита, связанная с обработкой ядрищ?",["Мустьерская","Ботайская","Андроновская","Сакская"],0],
+["Какой период палеолита связан с дальнейшим развитием техники обработки камня и древнего искусства?",["Верхний палеолит","Ранний неолит","Энеолит","Бронзовый век"],0],
+["Какое изобретение считается одним из важнейших достижений мезолита?",["Лук и стрелы","Плуг","Колесо","Письменность"],0],
+["Почему лук и стрелы были важны для древних охотников?",["Они позволяли охотиться на расстоянии","Они использовались для обработки металла","Они заменяли жилище","Они служили посудой"],0],
+["Что произошло с климатом после окончания ледникового периода?",["Он стал теплее","Он стал постоянно холоднее","Ничего не изменилось","Наступил ледниковый период"],0],
+["Что такое микролиты?",["Мелкие каменные орудия","Крупные каменные дома","Медные украшения","Керамические печи"],0],
+["Какое изменение характерно для неолита?",["Распространение земледелия и скотоводства","Появление железных орудий","Возникновение письменности","Появление огнестрельного оружия"],0],
+["Как называется переход от присваивающего хозяйства к производящему?",["Неолитическая революция","Промышленная революция","Военная реформа","Культурная революция"],0],
+["Какое нововведение относится к неолиту?",["Изготовление керамической посуды","Производство стали","Печатный станок","Монетная чеканка"],0],
+["Как называли период, когда человек начал активно использовать металл, но каменные орудия ещё сохранялись?",["Энеолит","Мезолит","Палеолит","Средневековье"],0],
+["Что означает термин «энеолит»?",["Медно-каменный век","Новый каменный век","Средний каменный век","Железный век"],0],
+["Какая культура связана с ранним коневодством на территории Северного Казахстана?",["Ботайская","Андроновская","Бегазы-дандыбаевская","Сакская"],0],
+["Чем особенно известна Ботайская культура?",["Ранним коневодством","Появлением письменности","Производством железа","Строительством городов"],0],
+["Какой металл первым начал широко использоваться в период энеолита?",["Медь","Железо","Сталь","Алюминий"],0],
+["Что изучает археология при исследовании каменного века?",["Материальные остатки деятельности людей","Только письменные документы","Только современные языки","Только климат"],0],
+["Где находили древние палеолитические стоянки Восточного Казахстана?",["В районе Иртыша и его притоков","Только у Каспийского моря","Только в пустыне Бетпак-Дала","Только в Мангистау"],0],
+["Какую роль огонь играл в жизни древних людей?",["Обогрев, приготовление пищи и защита","Только изготовление керамики","Только охота","Только строительство"],0],
+["Каким было основное занятие людей раннего каменного века?",["Охота и собирательство","Торговля","Развитое земледелие","Горное производство"],0],
+["Что стало одним из последствий развития производящего хозяйства?",["Люди стали меньше зависеть от случайной добычи пищи","Люди перестали пользоваться орудиями","Исчезли поселения","Полностью исчезла охота"],0],
+["Какой порядок периодов от более древнего к более позднему правильный?",["Палеолит → мезолит → неолит → энеолит","Неолит → палеолит → энеолит → мезолит","Энеолит → неолит → мезолит → палеолит","Мезолит → палеолит → неолит → энеолит"],0]
+];
+
+let current=0,score=0,selected=null;
+
+function showQuestion(){
+ selected=null;
+ let q=questions[current];
+ document.getElementById("number").textContent=`Вопрос ${current+1} из ${questions.length}`;
+ document.getElementById("question").textContent=q[0];
+ document.getElementById("bar").style.width=((current)/questions.length*100)+"%";
+ let box=document.getElementById("answers");
+ box.innerHTML="";
+ q[1].forEach((a,i)=>{
+   let b=document.createElement("button");
+   b.className="answer";
+   b.textContent=a;
+   b.onclick=()=>selectAnswer(i,b);
+   box.appendChild(b);
+ });
+}
+
+function selectAnswer(i,b){
+ selected=i;
+ document.querySelectorAll(".answer").forEach(x=>x.classList.remove("selected"));
+ b.classList.add("selected");
+}
+
+function nextQuestion(){
+ if(selected===null){alert("Сначала выбери ответ 🙂");return}
+ if(selected===questions[current][2])score++;
+ current++;
+ if(current<questions.length)showQuestion();
+ else{
+   document.getElementById("test").classList.add("hidden");
+   document.getElementById("result").classList.remove("hidden");
+   document.getElementById("score").textContent=`Ты набрал ${score} из ${questions.length}`;
+ }
+}
+
+function openEssay(){
+ document.getElementById("result").classList.add("hidden");
+ document.getElementById("essay").classList.remove("hidden");
+}
+
+function checkEssay(){
+ let text=document.getElementById("essayText").value.trim();
+ let words=text?text.split(/\s+/).length:0;
+ let keys=["палеолит","мезолит","неолит","энеолит","охота","собирательство","земледелие","скотоводство","оруд","камн","огонь"];
+ let found=keys.filter(x=>text.toLowerCase().includes(x)).length;
+ let mark=0;
+ if(words>=40)mark++;
+ if(words>=80)mark++;
+ if(words>=120)mark++;
+ if(found>=2)mark++;
+ if(found>=4)mark++;
+ if(found>=6)mark++;
+ if(text.includes("."))mark++;
+ if(text.includes(","))mark++;
+ if(words>=150)mark++;
+ if(words>=200)mark++;
+ document.getElementById("essayResult").innerHTML=
+ `<h2>Оценка: ${mark}/10</h2><p>Слов: ${words}. Тематических терминов: ${found}.</p><p class="muted">Оценка сделана по простым критериям учебного проекта.</p>`;
+}
+
+showQuestion();
+</script>
+</body>
+</html>
